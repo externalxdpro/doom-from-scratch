@@ -16,29 +16,25 @@
 #define GLSW (SW * pixelScale)
 #define GLSH (SH * pixelScale)
 
-struct Time {
+struct {
     int fr1, fr2;
-};
-Time T;
+} Time;
 
-struct Keys {
+struct {
     int w, s, a, d;
     int sl, sr;
     int m;
-};
-Keys K;
+} Keys;
 
-struct Math {
+struct {
     std::array<float, 360> sin, cos;
-};
-Math M;
+} Math;
 
-struct Player {
+struct {
     int x, y, z;
     int a;
     int l;
-};
-Player P;
+} Player;
 
 void pixel(int x, int y, int c) {
     std::array<int, 3> rgb;
@@ -68,45 +64,45 @@ void pixel(int x, int y, int c) {
 }
 
 void movePlayer() {
-    if (K.a == 1 && K.m == 0) {
-        P.a -= 4;
-        P.a += P.a < 0 ? 360 : 0;
+    if (Keys.a == 1 && Keys.m == 0) {
+        Player.a -= 4;
+        Player.a += Player.a < 0 ? 360 : 0;
     }
-    if (K.d == 1 && K.m == 0) {
-        P.a += 4;
-        P.a -= P.a > 359 ? 360 : 0;
-    }
-
-    int dx = M.sin[P.a] * 10.0, dy = M.cos[P.a] * 10.0;
-    if (K.w == 1 && K.m == 0) {
-        P.x += dx;
-        P.y += dy;
-    }
-    if (K.s == 1 && K.m == 0) {
-        P.x -= dx;
-        P.y -= dy;
+    if (Keys.d == 1 && Keys.m == 0) {
+        Player.a += 4;
+        Player.a -= Player.a > 359 ? 360 : 0;
     }
 
-    if (K.sl == 1) {
-        P.x += dy;
-        P.y += dx;
+    int dx = Math.sin[Player.a] * 10.0, dy = Math.cos[Player.a] * 10.0;
+    if (Keys.w == 1 && Keys.m == 0) {
+        Player.x += dx;
+        Player.y += dy;
     }
-    if (K.sr == 1) {
-        P.x -= dy;
-        P.y -= dx;
+    if (Keys.s == 1 && Keys.m == 0) {
+        Player.x -= dx;
+        Player.y -= dy;
     }
 
-    if (K.a == 1 && K.m == 1) {
-        P.l -= 1;
+    if (Keys.sl == 1) {
+        Player.x += dy;
+        Player.y += dx;
     }
-    if (K.d == 1 && K.m == 1) {
-        P.l += 1;
+    if (Keys.sr == 1) {
+        Player.x -= dy;
+        Player.y -= dx;
     }
-    if (K.w == 1 && K.m == 1) {
-        P.z -= 4;
+
+    if (Keys.a == 1 && Keys.m == 1) {
+        Player.l -= 1;
     }
-    if (K.s == 1 && K.m == 1) {
-        P.z += 4;
+    if (Keys.d == 1 && Keys.m == 1) {
+        Player.l += 1;
+    }
+    if (Keys.w == 1 && Keys.m == 1) {
+        Player.z -= 4;
+    }
+    if (Keys.s == 1 && Keys.m == 1) {
+        Player.z += 4;
     }
 }
 
@@ -136,75 +132,75 @@ void draw3D() {
 }
 
 void display() {
-    if (T.fr1 - T.fr2 >= 50) {
+    if (Time.fr1 - Time.fr2 >= 50) {
         clearBackground();
         movePlayer();
         draw3D();
 
-        T.fr2 = T.fr1;
+        Time.fr2 = Time.fr1;
         glutSwapBuffers();
         glutReshapeWindow(GLSW, GLSH);
     }
 
-    T.fr1 = glutGet(GLUT_ELAPSED_TIME);
+    Time.fr1 = glutGet(GLUT_ELAPSED_TIME);
     glutPostRedisplay();
 }
 
 void keysDown(unsigned char key, int x, int y) {
     if (key == 'w') {
-        K.w = 1;
+        Keys.w = 1;
     }
     if (key == 's') {
-        K.s = 1;
+        Keys.s = 1;
     }
     if (key == 'a') {
-        K.a = 1;
+        Keys.a = 1;
     }
     if (key == 'd') {
-        K.d = 1;
+        Keys.d = 1;
     }
     if (key == 'm') {
-        K.m = 1;
+        Keys.m = 1;
     }
     if (key == ',') {
-        K.sl = 1;
+        Keys.sl = 1;
     }
     if (key == '.') {
-        K.sr = 1;
+        Keys.sr = 1;
     }
 }
 
 void keysUp(unsigned char key, int x, int y) {
     if (key == 'w') {
-        K.w = 0;
+        Keys.w = 0;
     }
     if (key == 's') {
-        K.s = 0;
+        Keys.s = 0;
     }
     if (key == 'a') {
-        K.a = 0;
+        Keys.a = 0;
     }
     if (key == 'd') {
-        K.d = 0;
+        Keys.d = 0;
     }
     if (key == 'm') {
-        K.m = 0;
+        Keys.m = 0;
     }
     if (key == ',') {
-        K.sl = 0;
+        Keys.sl = 0;
     }
     if (key == '.') {
-        K.sr = 0;
+        Keys.sr = 0;
     }
 }
 
 void init() {
     for (int i = 0; i < 360; i++) {
-        M.sin[i] = sin(i / 180.0 * M_PI);
-        M.cos[i] = cos(i / 180.0 * M_PI);
+        Math.sin[i] = sin(i / 180.0 * M_PI);
+        Math.cos[i] = cos(i / 180.0 * M_PI);
     }
 
-    P = {.x = 70, .y = -110, .z = 20, .a = 0, .l = 0};
+    Player = {.x = 70, .y = -110, .z = 20, .a = 0, .l = 0};
 }
 
 int main(int argc, char *argv[]) {
