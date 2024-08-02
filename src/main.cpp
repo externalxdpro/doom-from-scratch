@@ -6,7 +6,6 @@
 #include <array>
 #include <cmath>
 #include <iostream>
-#include <vector>
 
 #define res 1
 #define SW 160 * res
@@ -28,6 +27,18 @@ struct Keys {
     int m;
 };
 Keys K;
+
+struct Math {
+    std::array<float, 360> sin, cos;
+};
+Math M;
+
+struct Player {
+    int x, y, z;
+    int a;
+    int l;
+};
+Player P;
 
 void pixel(int x, int y, int c) {
     std::array<int, 3> rgb;
@@ -58,36 +69,44 @@ void pixel(int x, int y, int c) {
 
 void movePlayer() {
     if (K.a == 1 && K.m == 0) {
-        std::cout << "left\n";
+        P.a -= 4;
+        P.a += P.a < 0 ? 360 : 0;
     }
     if (K.d == 1 && K.m == 0) {
-        std::cout << "right\n";
+        P.a += 4;
+        P.a -= P.a > 359 ? 360 : 0;
     }
+
+    int dx = M.sin[P.a] * 10.0, dy = M.cos[P.a] * 10.0;
     if (K.w == 1 && K.m == 0) {
-        std::cout << "up\n";
+        P.x += dx;
+        P.y += dy;
     }
     if (K.s == 1 && K.m == 0) {
-        std::cout << "down\n";
+        P.x -= dx;
+        P.y -= dy;
     }
 
     if (K.sl == 1) {
-        std::cout << "strafe left\n";
+        P.x += dy;
+        P.y += dx;
     }
     if (K.sr == 1) {
-        std::cout << "strafe right\n";
+        P.x -= dy;
+        P.y -= dx;
     }
 
     if (K.a == 1 && K.m == 1) {
-        std::cout << "look up\n";
+        P.l -= 1;
     }
     if (K.d == 1 && K.m == 1) {
-        std::cout << "look down\n";
+        P.l += 1;
     }
     if (K.w == 1 && K.m == 1) {
-        std::cout << "move up\n";
+        P.z -= 4;
     }
     if (K.s == 1 && K.m == 1) {
-        std::cout << "move up\n";
+        P.z += 4;
     }
 }
 
@@ -179,7 +198,14 @@ void keysUp(unsigned char key, int x, int y) {
     }
 }
 
-void init() {}
+void init() {
+    for (int i = 0; i < 360; i++) {
+        M.sin[i] = sin(i / 180.0 * M_PI);
+        M.cos[i] = cos(i / 180.0 * M_PI);
+    }
+
+    P = {.x = 70, .y = -110, .z = 20, .a = 0, .l = 0};
+}
 
 int main(int argc, char *argv[]) {
     glutInit(&argc, argv);
