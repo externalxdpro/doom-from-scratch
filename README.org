@@ -1,0 +1,10 @@
+#+title: README
+
+* Run
+#+begin_src shell
+mkdir build
+cd build
+cmake ..
+make
+bin/game
+#+end_src
