@@ -84,12 +84,12 @@ void movePlayer() {
     }
 
     if (Keys.sl == 1) {
-        Player.x += dy;
-        Player.y += dx;
-    }
-    if (Keys.sr == 1) {
         Player.x -= dy;
         Player.y -= dx;
+    }
+    if (Keys.sr == 1) {
+        Player.x += dy;
+        Player.y += dx;
     }
 
     if (Keys.a == 1 && Keys.m == 1) {
@@ -114,6 +114,18 @@ void clearBackground() {
     }
 }
 
+void drawWall(int x1, int x2, int b1, int b2) {
+    int x, y;
+    int dyb = b2 - b1;
+    int dx  = (x2 - x1 == 0) ? 1 : x2 - x1;
+    int xs  = x1;
+
+    for (x = x1; x < x2; x++) {
+        int y1 = dyb * (x - xs + 0.5) / dx + b1;
+        pixel(x, y1, 0);
+    }
+}
+
 void draw3D() {
     std::array<int, 4> wx, wy, wz;
 
@@ -133,12 +145,13 @@ void draw3D() {
     wx[1] = wx[1] * 200 / wy[1] + SW2;
     wy[1] = wz[1] * 200 / wy[1] + SH2;
 
-    if (wx[0] > 0 && wx[0] < SW && wy[0] > 0 && wy[0] < SH) {
-        pixel(wx[0], wy[0], 0);
-    }
-    if (wx[1] > 0 && wx[1] < SW && wy[1] > 0 && wy[1] < SH) {
-        pixel(wx[1], wy[1], 0);
-    }
+    // if (wx[0] > 0 && wx[0] < SW && wy[0] > 0 && wy[0] < SH) {
+    //     pixel(wx[0], wy[0], 0);
+    // }
+    // if (wx[1] > 0 && wx[1] < SW && wy[1] > 0 && wy[1] < SH) {
+    //     pixel(wx[1], wy[1], 0);
+    // }
+    drawWall(wx[0], wx[1], wy[0], wy[1]);
 }
 
 void display() {
