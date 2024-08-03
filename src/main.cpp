@@ -114,15 +114,47 @@ void clearBackground() {
     }
 }
 
-void drawWall(int x1, int x2, int b1, int b2) {
-    int x, y;
-    int dyb = b2 - b1;
-    int dx  = (x2 - x1 == 0) ? 1 : x2 - x1;
-    int xs  = x1;
+void drawWall(std::pair<int, int> x, std::pair<int, int> b,
+              std::pair<int, int> t) {
+    int currX, currY;
+    int dyb = b.second - b.first;
+    int dyt = t.second - t.first;
+    int dx  = (x.second - x.first == 0) ? 1 : x.second - x.first;
+    int xi  = x.first;
 
-    for (x = x1; x < x2; x++) {
-        int y1 = dyb * (x - xs + 0.5) / dx + b1;
-        pixel(x, y1, 0);
+    if (x.first < 1) {
+        x.first = 1;
+    }
+    if (x.second < 1) {
+        x.second = 1;
+    }
+    if (x.first > SW - 1) {
+        x.first = SW - 1;
+    }
+    if (x.second > SW - 1) {
+        x.second = SW - 1;
+    }
+
+    for (currX = x.first; currX < x.second; currX++) {
+        std::pair<int, int> y = {dyb * (currX - xi + 0.5) / dx + b.first,
+                                 dyt * (currX - xi + 0.5) / dx + t.first};
+
+        if (y.first < 1) {
+            y.first = 1;
+        }
+        if (y.second < 1) {
+            y.second = 1;
+        }
+        if (y.first > SH - 1) {
+            y.first = SH - 1;
+        }
+        if (y.second > SH - 1) {
+            y.second = SH - 1;
+        }
+
+        for (currY = y.first; currY < y.second; currY++) {
+            pixel(currX, currY, 0);
+        }
     }
 }
 
@@ -135,15 +167,27 @@ void draw3D() {
 
     wx[0] = x1 * cos - y1 * sin;
     wx[1] = x2 * cos - y2 * sin;
+    wx[2] = wx[0];
+    wx[3] = wx[1];
+
     wy[0] = y1 * cos + x1 * sin;
     wy[1] = y2 * cos + x2 * sin;
+    wy[2] = wy[0];
+    wy[3] = wy[1];
+
     wz[0] = -Player.z + ((Player.l * wy[0]) / 32.0);
     wz[1] = -Player.z + ((Player.l * wy[1]) / 32.0);
+    wz[2] = wz[0] + 40;
+    wz[3] = wz[1] + 40;
 
     wx[0] = wx[0] * 200 / wy[0] + SW2;
     wy[0] = wz[0] * 200 / wy[0] + SH2;
     wx[1] = wx[1] * 200 / wy[1] + SW2;
     wy[1] = wz[1] * 200 / wy[1] + SH2;
+    wx[2] = wx[2] * 200 / wy[2] + SW2;
+    wy[2] = wz[2] * 200 / wy[2] + SH2;
+    wx[3] = wx[3] * 200 / wy[3] + SW2;
+    wy[3] = wz[3] * 200 / wy[3] + SH2;
 
     // if (wx[0] > 0 && wx[0] < SW && wy[0] > 0 && wy[0] < SH) {
     //     pixel(wx[0], wy[0], 0);
@@ -151,7 +195,7 @@ void draw3D() {
     // if (wx[1] > 0 && wx[1] < SW && wy[1] > 0 && wy[1] < SH) {
     //     pixel(wx[1], wy[1], 0);
     // }
-    drawWall(wx[0], wx[1], wy[0], wy[1]);
+    drawWall({wx[0], wx[1]}, {wy[0], wy[1]}, {wy[2], wy[3]});
 }
 
 void display() {
