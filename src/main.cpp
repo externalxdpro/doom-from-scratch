@@ -5,7 +5,6 @@
 
 #include <array>
 #include <cmath>
-#include <iostream>
 
 #define res 1
 #define SW 160 * res
@@ -15,6 +14,8 @@
 #define pixelScale 4 / res
 #define GLSW (SW * pixelScale)
 #define GLSH (SH * pixelScale)
+#define NUM_SECTS 4
+#define NUM_WALLS 16
 
 struct Frames {
     int fr1, fr2;
@@ -39,6 +40,18 @@ struct Player {
     int l;
 };
 Player player;
+
+struct Walls {
+    std::pair<int, int> x, y;
+    int                 c;
+};
+std::array<Walls, 30> walls;
+
+struct Sectors {
+    std::pair<int, int> w, z;
+    int                 d;
+};
+std::array<Sectors, 30> sectors;
 
 void pixel(int x, int y, int c) {
     std::array<int, 3> rgb;
@@ -132,8 +145,7 @@ void clipBehindPlayer(std::pair<int &, int> x, std::pair<int &, int> y,
 }
 
 void drawWall(std::pair<int, int> x, std::pair<int, int> b,
-              std::pair<int, int> t) {
-    int currX, currY;
+              std::pair<int, int> t, int c) {
     int dyb = b.second - b.first;
     int dyt = t.second - t.first;
     int dx  = (x.second - x.first == 0) ? 1 : x.second - x.first;
@@ -152,7 +164,7 @@ void drawWall(std::pair<int, int> x, std::pair<int, int> b,
         x.second = SW - 1;
     }
 
-    for (currX = x.first; currX < x.second; currX++) {
+    for (int currX = x.first; currX < x.second; currX++) {
         std::pair<int, int> y = {dyb * (currX - xi + 0.5) / dx + b.first,
                                  dyt * (currX - xi + 0.5) / dx + t.first};
 
@@ -169,60 +181,74 @@ void drawWall(std::pair<int, int> x, std::pair<int, int> b,
             y.second = SH - 1;
         }
 
-        for (currY = y.first; currY < y.second; currY++) {
-            pixel(currX, currY, 0);
+        for (int currY = y.first; currY < y.second; currY++) {
+            pixel(currX, currY, c);
         }
     }
+}
+
+int dist(std::pair<int, int> x, std::pair<int, int> y) {
+    return std::sqrt((x.second - x.first) * (x.second - x.first) +
+                     (y.second - y.first) * (y.second - y.first));
 }
 
 void draw3D() {
     std::array<int, 4> wx, wy, wz;
 
     float cos = math.cos[player.a], sin = math.sin[player.a];
-    int   x1 = 40 - player.x, y1 = 10 - player.y;
-    int   x2 = 40 - player.x, y2 = 290 - player.y;
 
-    wx[0] = x1 * cos - y1 * sin;
-    wx[1] = x2 * cos - y2 * sin;
-    wx[2] = wx[0];
-    wx[3] = wx[1];
+    for (int s = 0; s < NUM_SECTS; s++) {
+        for (int w = sectors[s].w.first; w < sectors[s].w.second; w++) {
+            int x1 = walls[w].x.first - player.x,
+                y1 = walls[w].y.first - player.y;
+            int x2 = walls[w].x.second - player.x,
+                y2 = walls[w].y.second - player.y;
 
-    wy[0] = y1 * cos + x1 * sin;
-    wy[1] = y2 * cos + x2 * sin;
-    wy[2] = wy[0];
-    wy[3] = wy[1];
+            wx[0] = x1 * cos - y1 * sin;
+            wx[1] = x2 * cos - y2 * sin;
+            wx[2] = wx[0];
+            wx[3] = wx[1];
 
-    wz[0] = -player.z + ((player.l * wy[0]) / 32.0);
-    wz[1] = -player.z + ((player.l * wy[1]) / 32.0);
-    wz[2] = wz[0] + 40;
-    wz[3] = wz[1] + 40;
+            wy[0] = y1 * cos + x1 * sin;
+            wy[1] = y2 * cos + x2 * sin;
+            wy[2] = wy[0];
+            wy[3] = wy[1];
+            sectors[s].d +=
+                dist({0, (wx[0] + wx[1]) / 2}, {0, (wy[0] + wy[1]) / 2});
 
-    if (wy[0] < 1 && wy[1] < 1) {
-        return;
-    } else if (wy[0] < 1) {
-        clipBehindPlayer({wx[0], wx[1]}, {wy[0], wy[1]}, {wz[0], wz[1]});
-        clipBehindPlayer({wx[2], wx[3]}, {wy[2], wy[3]}, {wz[3], wz[2]});
-    } else if (wy[1] < 1) {
-        clipBehindPlayer({wx[1], wx[0]}, {wy[1], wy[0]}, {wz[1], wz[0]});
-        clipBehindPlayer({wx[3], wx[2]}, {wy[3], wy[2]}, {wz[3], wz[2]});
+            wz[0] = sectors[s].z.first - player.z + ((player.l * wy[0]) / 32.0);
+            wz[1] = sectors[s].z.first - player.z + ((player.l * wy[1]) / 32.0);
+            wz[2] = wz[0] + sectors[s].z.second;
+            wz[3] = wz[1] + sectors[s].z.second;
+
+            if (wy[0] < 1 && wy[1] < 1) {
+                continue;
+            } else if (wy[0] < 1) {
+                clipBehindPlayer({wx[0], wx[1]}, {wy[0], wy[1]},
+                                 {wz[0], wz[1]});
+                clipBehindPlayer({wx[2], wx[3]}, {wy[2], wy[3]},
+                                 {wz[3], wz[2]});
+            } else if (wy[1] < 1) {
+                clipBehindPlayer({wx[1], wx[0]}, {wy[1], wy[0]},
+                                 {wz[1], wz[0]});
+                clipBehindPlayer({wx[3], wx[2]}, {wy[3], wy[2]},
+                                 {wz[3], wz[2]});
+            }
+
+            wx[0] = wx[0] * 200 / wy[0] + SW2;
+            wy[0] = wz[0] * 200 / wy[0] + SH2;
+            wx[1] = wx[1] * 200 / wy[1] + SW2;
+            wy[1] = wz[1] * 200 / wy[1] + SH2;
+            wx[2] = wx[2] * 200 / wy[2] + SW2;
+            wy[2] = wz[2] * 200 / wy[2] + SH2;
+            wx[3] = wx[3] * 200 / wy[3] + SW2;
+            wy[3] = wz[3] * 200 / wy[3] + SH2;
+
+            drawWall({wx[0], wx[1]}, {wy[0], wy[1]}, {wy[2], wy[3]},
+                     walls[w].c);
+        }
+        sectors[s].d /= (sectors[s].w.second - sectors[s].w.first);
     }
-
-    wx[0] = wx[0] * 200 / wy[0] + SW2;
-    wy[0] = wz[0] * 200 / wy[0] + SH2;
-    wx[1] = wx[1] * 200 / wy[1] + SW2;
-    wy[1] = wz[1] * 200 / wy[1] + SH2;
-    wx[2] = wx[2] * 200 / wy[2] + SW2;
-    wy[2] = wz[2] * 200 / wy[2] + SH2;
-    wx[3] = wx[3] * 200 / wy[3] + SW2;
-    wy[3] = wz[3] * 200 / wy[3] + SH2;
-
-    // if (wx[0] > 0 && wx[0] < SW && wy[0] > 0 && wy[0] < SH) {
-    //     pixel(wx[0], wy[0], 0);
-    // }
-    // if (wx[1] > 0 && wx[1] < SW && wy[1] > 0 && wy[1] < SH) {
-    //     pixel(wx[1], wy[1], 0);
-    // }
-    drawWall({wx[0], wx[1]}, {wy[0], wy[1]}, {wy[2], wy[3]});
 }
 
 void display() {
@@ -288,6 +314,37 @@ void keysUp(unsigned char key, int x, int y) {
     }
 }
 
+std::array loadSectors = {
+    // w.first, w.second, z.first, z.second
+    0,  4,  0, 40, // sector 1
+    4,  8,  0, 40, // sector 2
+    8,  12, 0, 40, // sector 3
+    12, 16, 0, 40, // sector 4
+};
+
+std::array loadWalls = {
+    // x.first, x.second, y.first, y.second, c
+    0,  32, 0,  0,  0, //
+    32, 32, 0,  32, 1, //
+    32, 0,  32, 32, 0, //
+    0,  0,  32, 0,  1, //
+
+    64, 96, 0,  0,  2, //
+    96, 96, 0,  32, 3, //
+    96, 64, 32, 32, 2, //
+    64, 64, 32, 0,  3, //
+
+    64, 96, 64, 64, 4, //
+    96, 96, 64, 96, 5, //
+    96, 64, 96, 96, 4, //
+    64, 64, 96, 64, 5, //
+
+    0,  32, 64, 64, 6, //
+    32, 32, 64, 96, 7, //
+    32, 0,  96, 96, 6, //
+    0,  0,  96, 64, 7, //
+};
+
 void init() {
     for (int i = 0; i < 360; i++) {
         math.sin[i] = sin(i / 180.0 * M_PI);
@@ -295,6 +352,20 @@ void init() {
     }
 
     player = {.x = 70, .y = -110, .z = 20, .a = 0, .l = 0};
+
+    int v1 = 0, v2 = 0;
+    for (int s = 0; s < NUM_SECTS; s++) {
+        sectors[s].w = {loadSectors[v1 + 0], loadSectors[v1 + 1]};
+        sectors[s].z = {loadSectors[v1 + 2], loadSectors[v1 + 3]};
+        v1 += 4;
+
+        for (int w = sectors[s].w.first; w < sectors[s].w.second; w++) {
+            walls[w].x = {loadWalls[v2 + 0], loadWalls[v2 + 1]};
+            walls[w].y = {loadWalls[v2 + 2], loadWalls[v2 + 3]};
+            walls[w].c = loadWalls[v2 + 4];
+            v2 += 5;
+        }
+    }
 }
 
 int main(int argc, char *argv[]) {
