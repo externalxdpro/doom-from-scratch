@@ -3,6 +3,7 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 
@@ -41,17 +42,17 @@ struct Player {
 };
 Player player;
 
-struct Walls {
+struct Wall {
     std::pair<int, int> x, y;
     int                 c;
 };
-std::array<Walls, 30> walls;
+std::array<Wall, 30> walls;
 
-struct Sectors {
+struct Sector {
     std::pair<int, int> w, z;
     int                 d;
 };
-std::array<Sectors, 30> sectors;
+std::array<Sector, 30> sectors;
 
 void pixel(int x, int y, int c) {
     std::array<int, 3> rgb;
@@ -196,6 +197,9 @@ void draw3D() {
     std::array<int, 4> wx, wy, wz;
 
     float cos = math.cos[player.a], sin = math.sin[player.a];
+
+    std::sort(sectors.begin(), sectors.begin() + NUM_SECTS,
+              [](Sector a, Sector b) { return a.d > b.d; });
 
     for (int s = 0; s < NUM_SECTS; s++) {
         for (int w = sectors[s].w.first; w < sectors[s].w.second; w++) {
