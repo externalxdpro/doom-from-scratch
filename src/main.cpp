@@ -202,11 +202,18 @@ void draw3D() {
               [](Sector a, Sector b) { return a.d > b.d; });
 
     for (int s = 0; s < NUM_SECTS; s++) {
+        bool loop = false;
         for (int w = sectors[s].w.first; w < sectors[s].w.second; w++) {
             int x1 = walls[w].x.first - player.x,
                 y1 = walls[w].y.first - player.y;
             int x2 = walls[w].x.second - player.x,
                 y2 = walls[w].y.second - player.y;
+
+            if (!loop) {
+                std::swap(x1, x2);
+                std::swap(y1, y2);
+                loop = true;
+            }
 
             wx[0] = x1 * cos - y1 * sin;
             wx[1] = x2 * cos - y2 * sin;
