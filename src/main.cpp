@@ -114,6 +114,19 @@ void clearBackground() {
     }
 }
 
+void clipBehindPlayer(std::pair<int &, int> x, std::pair<int &, int> y,
+                      std::pair<int &, int> z) {
+    float da = y.first, db = y.second;
+    float d = (da - db == 0) ? 1 : da - db;
+    float s = da / d;
+    x.first = x.first + s * (x.second - x.first);
+    y.first = y.first + s * (y.second - y.first);
+    if (y.first == 0) {
+        y.first = 1;
+    }
+    z.first = z.first + s * (z.second - z.first);
+}
+
 void drawWall(std::pair<int, int> x, std::pair<int, int> b,
               std::pair<int, int> t) {
     int currX, currY;
@@ -179,6 +192,16 @@ void draw3D() {
     wz[1] = -Player.z + ((Player.l * wy[1]) / 32.0);
     wz[2] = wz[0] + 40;
     wz[3] = wz[1] + 40;
+
+    if (wy[0] < 1 && wy[1] < 1) {
+        return;
+    } else if (wy[0] < 1) {
+        clipBehindPlayer({wx[0], wx[1]}, {wy[0], wy[1]}, {wz[0], wz[1]});
+        clipBehindPlayer({wx[2], wx[3]}, {wy[2], wy[3]}, {wz[3], wz[2]});
+    } else if (wy[1] < 1) {
+        clipBehindPlayer({wx[1], wx[0]}, {wy[1], wy[0]}, {wz[1], wz[0]});
+        clipBehindPlayer({wx[3], wx[2]}, {wy[3], wy[2]}, {wz[3], wz[2]});
+    }
 
     wx[0] = wx[0] * 200 / wy[0] + SW2;
     wy[0] = wz[0] * 200 / wy[0] + SH2;
