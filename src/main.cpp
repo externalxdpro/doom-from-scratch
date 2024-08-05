@@ -202,63 +202,65 @@ void draw3D() {
               [](Sector a, Sector b) { return a.d > b.d; });
 
     for (int s = 0; s < NUM_SECTS; s++) {
-        bool loop = false;
-        for (int w = sectors[s].w.first; w < sectors[s].w.second; w++) {
-            int x1 = walls[w].x.first - player.x,
-                y1 = walls[w].y.first - player.y;
-            int x2 = walls[w].x.second - player.x,
-                y2 = walls[w].y.second - player.y;
+        for (int loop = 0; loop <= 1; loop++) {
+            for (int w = sectors[s].w.first; w < sectors[s].w.second; w++) {
+                int x1 = walls[w].x.first - player.x,
+                    y1 = walls[w].y.first - player.y;
+                int x2 = walls[w].x.second - player.x,
+                    y2 = walls[w].y.second - player.y;
 
-            if (!loop) {
-                std::swap(x1, x2);
-                std::swap(y1, y2);
-                loop = true;
+                if (loop == 0) {
+                    std::swap(x1, x2);
+                    std::swap(y1, y2);
+                }
+
+                wx[0] = x1 * cos - y1 * sin;
+                wx[1] = x2 * cos - y2 * sin;
+                wx[2] = wx[0];
+                wx[3] = wx[1];
+
+                wy[0] = y1 * cos + x1 * sin;
+                wy[1] = y2 * cos + x2 * sin;
+                wy[2] = wy[0];
+                wy[3] = wy[1];
+                sectors[s].d +=
+                    dist({0, (wx[0] + wx[1]) / 2}, {0, (wy[0] + wy[1]) / 2});
+
+                wz[0] =
+                    sectors[s].z.first - player.z + ((player.l * wy[0]) / 32.0);
+                wz[1] =
+                    sectors[s].z.first - player.z + ((player.l * wy[1]) / 32.0);
+                wz[2] = wz[0] + sectors[s].z.second;
+                wz[3] = wz[1] + sectors[s].z.second;
+
+                if (wy[0] < 1 && wy[1] < 1) {
+                    continue;
+                } else if (wy[0] < 1) {
+                    clipBehindPlayer({wx[0], wx[1]}, {wy[0], wy[1]},
+                                     {wz[0], wz[1]});
+                    clipBehindPlayer({wx[2], wx[3]}, {wy[2], wy[3]},
+                                     {wz[3], wz[2]});
+                } else if (wy[1] < 1) {
+                    clipBehindPlayer({wx[1], wx[0]}, {wy[1], wy[0]},
+                                     {wz[1], wz[0]});
+                    clipBehindPlayer({wx[3], wx[2]}, {wy[3], wy[2]},
+                                     {wz[3], wz[2]});
+                }
+
+                wx[0] = wx[0] * 200 / wy[0] + SW2;
+                wy[0] = wz[0] * 200 / wy[0] + SH2;
+                wx[1] = wx[1] * 200 / wy[1] + SW2;
+                wy[1] = wz[1] * 200 / wy[1] + SH2;
+                wx[2] = wx[2] * 200 / wy[2] + SW2;
+                wy[2] = wz[2] * 200 / wy[2] + SH2;
+                wx[3] = wx[3] * 200 / wy[3] + SW2;
+                wy[3] = wz[3] * 200 / wy[3] + SH2;
+
+                drawWall({wx[0], wx[1]}, {wy[0], wy[1]}, {wy[2], wy[3]},
+                         walls[w].c);
             }
-
-            wx[0] = x1 * cos - y1 * sin;
-            wx[1] = x2 * cos - y2 * sin;
-            wx[2] = wx[0];
-            wx[3] = wx[1];
-
-            wy[0] = y1 * cos + x1 * sin;
-            wy[1] = y2 * cos + x2 * sin;
-            wy[2] = wy[0];
-            wy[3] = wy[1];
-            sectors[s].d +=
-                dist({0, (wx[0] + wx[1]) / 2}, {0, (wy[0] + wy[1]) / 2});
-
-            wz[0] = sectors[s].z.first - player.z + ((player.l * wy[0]) / 32.0);
-            wz[1] = sectors[s].z.first - player.z + ((player.l * wy[1]) / 32.0);
-            wz[2] = wz[0] + sectors[s].z.second;
-            wz[3] = wz[1] + sectors[s].z.second;
-
-            if (wy[0] < 1 && wy[1] < 1) {
-                continue;
-            } else if (wy[0] < 1) {
-                clipBehindPlayer({wx[0], wx[1]}, {wy[0], wy[1]},
-                                 {wz[0], wz[1]});
-                clipBehindPlayer({wx[2], wx[3]}, {wy[2], wy[3]},
-                                 {wz[3], wz[2]});
-            } else if (wy[1] < 1) {
-                clipBehindPlayer({wx[1], wx[0]}, {wy[1], wy[0]},
-                                 {wz[1], wz[0]});
-                clipBehindPlayer({wx[3], wx[2]}, {wy[3], wy[2]},
-                                 {wz[3], wz[2]});
-            }
-
-            wx[0] = wx[0] * 200 / wy[0] + SW2;
-            wy[0] = wz[0] * 200 / wy[0] + SH2;
-            wx[1] = wx[1] * 200 / wy[1] + SW2;
-            wy[1] = wz[1] * 200 / wy[1] + SH2;
-            wx[2] = wx[2] * 200 / wy[2] + SW2;
-            wy[2] = wz[2] * 200 / wy[2] + SH2;
-            wx[3] = wx[3] * 200 / wy[3] + SW2;
-            wy[3] = wz[3] * 200 / wy[3] + SH2;
-
-            drawWall({wx[0], wx[1]}, {wy[0], wy[1]}, {wy[2], wy[3]},
-                     walls[w].c);
+            sectors[s].d /= (sectors[s].w.second - sectors[s].w.first);
         }
-        sectors[s].d /= (sectors[s].w.second - sectors[s].w.first);
     }
 }
 
