@@ -51,6 +51,9 @@ std::array<Wall, 30> walls;
 struct Sector {
     std::pair<int, int> w, z;
     int                 d;
+    std::pair<int, int> c;
+    std::array<int, SW> surf;
+    int                 surface;
 };
 std::array<Sector, 30> sectors;
 
@@ -146,7 +149,7 @@ void clipBehindPlayer(std::pair<int &, int> x, std::pair<int &, int> y,
 }
 
 void drawWall(std::pair<int, int> x, std::pair<int, int> b,
-              std::pair<int, int> t, int c) {
+              std::pair<int, int> t, int c, int s) {
     int dyb = b.second - b.first;
     int dyt = t.second - t.first;
     int dx  = (x.second - x.first == 0) ? 1 : x.second - x.first;
@@ -182,6 +185,20 @@ void drawWall(std::pair<int, int> x, std::pair<int, int> b,
             y.second = SH - 1;
         }
 
+        if (sectors[s].surface == 1) {
+            sectors[s].surf[currX] = y.first;
+        } else if (sectors[s].surface == 2) {
+            sectors[s].surf[currX] = y.second;
+        } else if (sectors[s].surface == -1) {
+            for (int currY = sectors[s].surf[currX]; currY < y.first; currY++) {
+                pixel(currX, currY, sectors[s].c.first);
+            }
+        } else if (sectors[s].surface == -2) {
+            for (int currY = y.first; currY < sectors[s].surf[currX]; currY++) {
+                pixel(currX, currY, sectors[s].c.second);
+            }
+        }
+
         for (int currY = y.first; currY < y.second; currY++) {
             pixel(currX, currY, c);
         }
@@ -202,6 +219,12 @@ void draw3D() {
               [](Sector a, Sector b) { return a.d > b.d; });
 
     for (int s = 0; s < NUM_SECTS; s++) {
+        if (player.z < sectors[s].z.first) {
+            sectors[s].surface = 1;
+        } else if (player.z > sectors[s].z.second) {
+            sectors[s].surface = 2;
+        }
+
         for (int loop = 0; loop <= 1; loop++) {
             for (int w = sectors[s].w.first; w < sectors[s].w.second; w++) {
                 int x1 = walls[w].x.first - player.x,
@@ -257,9 +280,10 @@ void draw3D() {
                 wy[3] = wz[3] * 200 / wy[3] + SH2;
 
                 drawWall({wx[0], wx[1]}, {wy[0], wy[1]}, {wy[2], wy[3]},
-                         walls[w].c);
+                         walls[w].c, s);
             }
             sectors[s].d /= (sectors[s].w.second - sectors[s].w.first);
+            sectors[s].surface *= -1;
         }
     }
 }
@@ -328,11 +352,11 @@ void keysUp(unsigned char key, int x, int y) {
 }
 
 std::array loadSectors = {
-    // w.first, w.second, z.first, z.second
-    0,  4,  0, 40, // sector 1
-    4,  8,  0, 40, // sector 2
-    8,  12, 0, 40, // sector 3
-    12, 16, 0, 40, // sector 4
+    // w.first, w.second, z.first, z.second, c.first, c.second
+    0,  4,  0, 40, 2, 3, // sector 1
+    4,  8,  0, 40, 4, 5, // sector 2
+    8,  12, 0, 40, 6, 7, // sector 3
+    12, 16, 0, 40, 0, 1, // sector 4
 };
 
 std::array loadWalls = {
@@ -370,7 +394,8 @@ void init() {
     for (int s = 0; s < NUM_SECTS; s++) {
         sectors[s].w = {loadSectors[v1 + 0], loadSectors[v1 + 1]};
         sectors[s].z = {loadSectors[v1 + 2], loadSectors[v1 + 3]};
-        v1 += 4;
+        sectors[s].c = {loadSectors[v1 + 4], loadSectors[v1 + 5]};
+        v1 += 6;
 
         for (int w = sectors[s].w.first; w < sectors[s].w.second; w++) {
             walls[w].x = {loadWalls[v2 + 0], loadWalls[v2 + 1]};
