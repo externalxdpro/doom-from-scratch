@@ -106,11 +106,11 @@ void movePlayer() {
 
     if (keys.sl == 1) {
         player.x -= dy;
-        player.y -= dx;
+        player.y += dx;
     }
     if (keys.sr == 1) {
         player.x += dy;
-        player.y += dx;
+        player.y -= dx;
     }
 
     if (keys.a == 1 && keys.m == 1) {
