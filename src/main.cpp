@@ -120,10 +120,10 @@ void movePlayer() {
         player.l += 1;
     }
     if (keys.w == 1 && keys.m == 1) {
-        player.z -= 4;
+        player.z += 4;
     }
     if (keys.s == 1 && keys.m == 1) {
-        player.z += 4;
+        player.z -= 4;
     }
 }
 
